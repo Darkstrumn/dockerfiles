@@ -1,0 +1,24 @@
+#!/bin/bash
+
+. ${SCRIPTS:-/}start-utils
+
+: ${PAPERBUILD:=latest}
+export SERVER=paper_server-${VANILLA_VERSION}-${PAPERBUILD}.jar
+
+if [ -f "$SERVER" ] && ! isTrue "$FORCE_REDOWNLOAD"; then
+  zarg="-z '$SERVER'"
+fi
+
+downloadUrl=${PAPER_DOWNLOAD_URL:-https://papermc.io/api/v1/paper/${VANILLA_VERSION}/${PAPERBUILD}/download}
+log "Downloading Paper $VANILLA_VERSION (build $PAPERBUILD) from $downloadUrl ..."
+if ! curl -fsSL -o "$SERVER" $zarg "$downloadUrl"; then
+  log "ERROR: failed to download from $downloadUrl (status=$?)"
+  exit 3
+fi
+
+# Normalize on Spigot for downstream operations
+export TYPE=SPIGOT
+export SKIP_LOG4J_CONFIG=true
+
+# Continue to Final Setup
+exec ${SCRIPTS:-/}start-finalSetupWorld $@
